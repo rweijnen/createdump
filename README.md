@@ -8,7 +8,7 @@ This project demonstrates how to dump the LSASS process using the `createdump.ex
 2. **place `dbgcore.dll` from this repo in the same folder**
 3. **execute createdump (optionally provide parameters)**
 
-##note: needs admin rights.
+## note: needs admin rights.
 
 Output should be something like this:
 ```
