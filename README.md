@@ -1,6 +1,6 @@
-# Windows App LSASS Dump - Proof of Concept
+# <img src="https://store-images.s-microsoft.com/image/apps.54073.13902538874112719.524cfb4a-0a7d-45be-bae7-dc1bb3a1c4af.bfaf52ba-a25c-4b1d-b32b-07d3e5c8bb8e?h=210" alt="Windows App" width=32/> Windows App LSASS Dump - Proof of Concept
 
-This project demonstrates how to dump the LSASS process using the `createdump.exe` tool from WindowsApps, leveraging a custom hook to enable process access.
+This project demonstrates how to dump the LSASS process using the `createdump.exe` tool, a Microsoft signed executable, from the Windows App, leveraging a custom hook to enable process access to `LSASS`.
 
 ## How to Use
 
@@ -37,3 +37,7 @@ MiniDumpWriteDump result: Success
 [createdump] Dump successfully written in 270ms
 DLL unloading, hooks removed.
 ```
+
+## Disclaimer
+
+This project is intended for educational purposes only. Misuse of this tool could violate privacy and security policies.
