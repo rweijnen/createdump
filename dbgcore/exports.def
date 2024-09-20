@@ -1,0 +1,3 @@
+LIBRARY "dbgcore"
+EXPORTS
+    MiniDumpWriteDump=MyMiniDumpWriteDump
