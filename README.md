@@ -2,6 +2,17 @@
 
 This project demonstrates how to dump the LSASS process using the `createdump.exe` tool, a Microsoft signed executable, from the Windows App, leveraging a custom hook to enable process access to `LSASS`.
 
+```
+Get-AuthentiCodeSignature -FilePath (Join-Path -Path (Get-AppxPackage -Name *Windows365*).InstallLocation -ChildPath 'wnc\createdump.exe')
+
+    Directory: C:\Program Files\WindowsApps\MicrosoftCorporationII.Windows365_2.0.285.0_x64__8wekyb3d8bbwe\wnc
+
+SignerCertificate                         Status                                       StatusMessage                               Path
+-----------------                         ------                                       -------------                               ----
+C2048FB509F1C37A8C3E9EC6648118458AA01780  Valid                                        Signature verified.                         createdump.exe
+
+```
+
 ## How to Use
 
 1. **Copy createdump from WindowsApp folder to a folder of choice (`copy C:\Program Files\WindowsApps\MicrosoftCorporationII.Windows365_2.0.285.0_x64__8wekyb3d8bbwe\wnc\createdump.exe .`)**
