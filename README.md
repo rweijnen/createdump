@@ -1,10 +1,12 @@
-* WindowsAPP LSASS dump Proof of Concept *
+# Windows App LSASS Dump - Proof of Concept
 
-How to use:
+This project demonstrates how to dump the LSASS process using the `createdump.exe` tool from WindowsApps, leveraging a custom hook to enable process access.
 
-1) copy createdump from WindowsApp folder to a folder of choice (`copy C:\Program Files\WindowsApps\MicrosoftCorporationII.Windows365_2.0.285.0_x64__8wekyb3d8bbwe\wnc\createdump.exe .`)
-2) place `dbgcore.dll` from this repo in the same folder
-3) execute createdump
+## How to Use
+
+1. **Copy createdump from WindowsApp folder to a folder of choice (`copy C:\Program Files\WindowsApps\MicrosoftCorporationII.Windows365_2.0.285.0_x64__8wekyb3d8bbwe\wnc\createdump.exe .`)**
+2. **place `dbgcore.dll` from this repo in the same folder**
+3. **execute createdump (optionally provide parameters)**
 
 Output should be something like this:
 ```
