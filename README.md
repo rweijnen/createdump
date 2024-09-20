@@ -1,4 +1,4 @@
-** WindowsAPP LSASS dump Proof of Concepot **
+* WindowsAPP LSASS dump Proof of Concept *
 
 How to use:
 
